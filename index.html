@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#1a1035" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="TeacherTracker" />
+  <link rel="manifest" href="manifest.json" />
+  <title>Teacher Rapport Tracker</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { min-height: 100%; overflow-x: hidden; }
+    body {
+      background: linear-gradient(135deg, #0F0C29 0%, #1a1035 50%, #0F0C29 100%);
+      color: #fff;
+      font-family: Georgia, serif;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+    button { border: none; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; background: transparent; }
+    .wrap { max-width: 680px; margin: 0 auto; padding: 24px 14px 80px; }
+
+    /* Header */
+    .header { text-align: center; margin-bottom: 28px; }
+    .header-sub { font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 6px; text-transform: uppercase; color: #a78bfa; margin-bottom: 6px; }
+    .header h1 { font-size: clamp(20px, 6vw, 32px); font-weight: 700; color: #fff; margin-bottom: 4px; }
+    .header p { color: #7c6fa0; font-size: 12px; font-family: sans-serif; }
+
+    /* Week nav */
+    .week-nav { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 20px; }
+    .week-nav button { background: #ffffff0a; border: 1px solid #ffffff15; color: #a78bfa; border-radius: 8px; padding: 6px 14px; font-family: 'Courier New', monospace; font-size: 11px; letter-spacing: 1px; }
+    .week-label { font-family: sans-serif; font-size: 12px; color: #c4b5fd; text-align: center; min-width: 160px; }
+    .week-badge { display: block; color: #a78bfa; font-size: 9px; letter-spacing: 2px; margin-top: 2px; }
+
+    /* Day summary */
+    .day-bar { display: flex; gap: 8px; margin-bottom: 20px; justify-content: center; }
+    .day-pip { flex: 1; max-width: 66px; border-radius: 10px; padding: 8px 4px; text-align: center; border: 1px solid #ffffff0f; background: #ffffff08; }
+    .day-pip.today { background: linear-gradient(135deg,#a78bfa22,#f472b622); border-color: #a78bfa55; box-shadow: 0 0 18px #a78bfa1a; }
+    .day-pip .dn { font-family: sans-serif; font-size: 9px; color: #7c6fa0; letter-spacing: 1px; margin-bottom: 3px; }
+    .day-pip.today .dn { color: #c4b5fd; }
+    .day-pip .dd { font-family: sans-serif; font-size: 12px; color: #e2d9f3; font-weight: 600; }
+    .day-pip .emoji { font-size: 15px; margin-top: 3px; }
+    .day-pip .dc { font-family: sans-serif; font-size: 9px; color: #7c6fa0; margin-top: 1px; }
+    .week-total { flex: 1; max-width: 66px; border-radius: 10px; padding: 8px 4px; text-align: center; border: 1px solid #a78bfa22; background: #ffffff08; }
+    .week-total .wl { font-family: sans-serif; font-size: 9px; color: #7c6fa0; letter-spacing: 1px; margin-bottom: 3px; }
+    .week-total .wn { font-size: 22px; font-weight: 700; color: #a78bfa; }
+    .week-total .ws { font-family: sans-serif; font-size: 9px; color: #7c6fa0; }
+
+    /* Subject rows */
+    .subjects { display: flex; flex-direction: column; gap: 10px; }
+    .subject-card { background: #ffffff07; border: 1px solid #ffffff10; border-radius: 14px; overflow: hidden; }
+    .subject-head { display: flex; align-items: center; padding: 11px 14px; border-bottom: 1px solid #ffffff08; gap: 10px; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .subject-name { flex: 1; font-weight: 600; font-size: 14px; }
+    .subject-count { font-family: sans-serif; font-size: 11px; color: #7c6fa0; }
+
+    /* Day columns */
+    .day-cols { display: flex; }
+    .day-col { flex: 1; }
+    .day-col:not(:last-child) { border-right: 1px solid #ffffff08; }
+    .day-col.is-today { background: #a78bfa08; }
+    .col-label { text-align: center; padding: 5px 2px 3px; font-family: sans-serif; font-size: 9px; color: #3d3555; letter-spacing: 1px; border-bottom: 1px solid #ffffff06; }
+    .day-col.is-today .col-label { color: #c4b5fd; }
+    .cell-btn { width: 100%; padding: 9px 4px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .pips { display: flex; gap: 3px; justify-content: center; flex-wrap: wrap; min-height: 16px; }
+    .pip { width: 6px; height: 6px; border-radius: 50%; background: #ffffff12; transition: all 0.2s; }
+    .pip.on { background: var(--accent); box-shadow: 0 0 5px var(--accent); }
+    .cell-score { font-family: sans-serif; font-size: 10px; color: #3d3555; font-weight: 400; }
+    .cell-score.has-checks { font-weight: 700; }
+
+    /* Checklist */
+    .checklist { padding: 8px 8px 10px; }
+    .check-row { display: flex; align-items: center; gap: 7px; cursor: pointer; padding: 5px 0; }
+    .checkbox { width: 17px; height: 17px; border-radius: 4px; flex-shrink: 0; border: 2px solid #ffffff22; background: transparent; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+    .checkbox.checked { border-color: var(--accent); background: var(--accent); box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 55%, transparent); }
+    .check-label { font-size: 10px; font-family: sans-serif; color: #c4b5fd; line-height: 1.3; }
+
+    /* Footer */
+    .footer { margin-top: 24px; padding: 14px 16px; background: #ffffff04; border-radius: 12px; border: 1px solid #ffffff08; }
+    .footer-title { font-family: sans-serif; font-size: 9px; color: #4a4060; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+    .footer-actions { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+    .footer-action { font-family: sans-serif; font-size: 11px; color: #7c6fa0; }
+    .footer-tip { font-family: sans-serif; font-size: 10px; color: #4a4060; margin-top: 8px; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="header-sub">Build Your Reputation</div>
+    <h1>Teacher Rapport Tracker</h1>
+    <p>Small actions. Big connections.</p>
+  </div>
+
+  <div class="week-nav">
+    <button id="prev-week">← prev</button>
+    <div class="week-label">
+      <span id="week-range"></span>
+      <span class="week-badge" id="this-week-badge" style="display:none">THIS WEEK</span>
+    </div>
+    <button id="next-week">next →</button>
+  </div>
+
+  <div class="day-bar" id="day-bar"></div>
+
+  <div class="subjects" id="subjects"></div>
+
+  <div class="footer">
+    <div class="footer-title">Actions</div>
+    <div class="footer-actions">
+      <span class="footer-action">👋 Said hi before class</span>
+      <span class="footer-action">🙏 Said thank you after</span>
+      <span class="footer-action">💬 Left a comment/thank you</span>
+      <span class="footer-action">🏫 Visited at Smart Period</span>
+    </div>
+    <div class="footer-tip">Tap any day cell to log your actions. Data is saved on your device.</div>
+  </div>
+
+</div>
+
+<script>
+const SUBJECTS = ["Geometry","English","Life Lab","Spanish","Art","Physics"];
+const ACTIONS = [
+  { id:"hi",      label:"Said hi before class",    icon:"👋" },
+  { id:"thanks",  label:"Said thank you after",     icon:"🙏" },
+  { id:"comment", label:"Left a comment/thank you", icon:"💬" },
+  { id:"visit",   label:"Visited at Smart Period",  icon:"🏫" },
+];
+const COLORS = {
+  "Geometry":"#FF6B8A","English":"#6B8AFF","Life Lab":"#4DB86A",
+  "Spanish":"#FF9C43","Art":"#A855F7","Physics":"#0EA5E9"
+};
+const DAY_NAMES = ["Mon","Tue","Wed","Thu","Fri"];
+
+let weekOffset = 0;
+let expanded = null;
+let checks = {};
+
+try { checks = JSON.parse(localStorage.getItem("teacherChecks")||"{}"); } catch {}
+
+function save() { localStorage.setItem("teacherChecks", JSON.stringify(checks)); }
+
+function getDayKey(d) {
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+
+function getToday() { return getDayKey(new Date()); }
+
+function getWeekDates(offset) {
+  const now = new Date();
+  const day = now.getDay();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - (day===0?6:day-1) + offset*7);
+  return Array.from({length:5},(_,i)=>{ const d=new Date(monday); d.setDate(monday.getDate()+i); return d; });
+}
+
+function cellKey(subject, dayKey) { return subject+"|"+dayKey; }
+function getCell(subject, dayKey) { return checks[cellKey(subject,dayKey)]||{}; }
+function cellCount(subject, dayKey) { return Object.values(getCell(subject,dayKey)).filter(Boolean).length; }
+function subjectTotal(subject, dates) { return dates.reduce((s,d)=>s+cellCount(subject,getDayKey(d)),0); }
+function dayTotal(dayKey) { return SUBJECTS.reduce((s,sub)=>s+(cellCount(sub,dayKey)>0?1:0),0); }
+function weekTotal(dates) { return SUBJECTS.reduce((s,sub)=>s+subjectTotal(sub,dates),0); }
+
+function render() {
+  const dates = getWeekDates(weekOffset);
+  const today = getToday();
+
+  // Week range label
+  const fmt = d => d.toLocaleDateString("en-US",{month:"short",day:"numeric"});
+  document.getElementById("week-range").textContent = fmt(dates[0])+" – "+fmt(dates[4]);
+  document.getElementById("this-week-badge").style.display = weekOffset===0 ? "block" : "none";
+
+  // Day bar
+  const dayBar = document.getElementById("day-bar");
+  dayBar.innerHTML = "";
+  dates.forEach((d,i) => {
+    const dk = getDayKey(d);
+    const count = dayTotal(dk);
+    const isToday = dk===today;
+    const emoji = count===0?"·":count>=5?"🔥":count>=3?"⭐":"✓";
+    const pip = document.createElement("div");
+    pip.className = "day-pip"+(isToday?" today":"");
+    pip.innerHTML = `<div class="dn">${DAY_NAMES[i]}</div><div class="dd">${d.getDate()}</div><div class="emoji">${emoji}</div><div class="dc">${count}/${SUBJECTS.length}</div>`;
+    dayBar.appendChild(pip);
+  });
+  const wt = document.createElement("div");
+  wt.className = "week-total";
+  wt.innerHTML = `<div class="wl">WEEK</div><div class="wn">${weekTotal(dates)}</div><div class="ws">total</div>`;
+  dayBar.appendChild(wt);
+
+  // Subject rows
+  const container = document.getElementById("subjects");
+  container.innerHTML = "";
+  SUBJECTS.forEach(subject => {
+    const accent = COLORS[subject];
+    const card = document.createElement("div");
+    card.className = "subject-card";
+
+    // Header
+    const head = document.createElement("div");
+    head.className = "subject-head";
+    head.innerHTML = `
+      <div class="dot" style="background:${accent};box-shadow:0 0 7px ${accent}88"></div>
+      <div class="subject-name">${subject}</div>
+      <div class="subject-count">${subjectTotal(subject,dates)} this week</div>
+    `;
+    card.appendChild(head);
+
+    // Columns
+    const cols = document.createElement("div");
+    cols.className = "day-cols";
+
+    dates.forEach((date, di) => {
+      const dayKey = getDayKey(date);
+      const ck = cellKey(subject, dayKey);
+      const isExpanded = expanded===ck;
+      const cc = getCell(subject, dayKey);
+      const count = cellCount(subject, dayKey);
+      const isToday = dayKey===today;
+
+      const col = document.createElement("div");
+      col.className = "day-col"+(isToday?" is-today":"");
+
+      // Label
+      const lbl = document.createElement("div");
+      lbl.className = "col-label";
+      lbl.textContent = DAY_NAMES[di];
+      col.appendChild(lbl);
+
+      // Cell button
+      const btn = document.createElement("button");
+      btn.className = "cell-btn";
+
+      const pipsDiv = document.createElement("div");
+      pipsDiv.className = "pips";
+      ACTIONS.forEach(a => {
+        const p = document.createElement("div");
+        p.className = "pip"+(cc[a.id]?" on":"");
+        p.style.setProperty("--accent", accent);
+        pipsDiv.appendChild(p);
+      });
+
+      const score = document.createElement("div");
+      score.className = "cell-score"+(count>0?" has-checks":"");
+      score.style.color = count>0 ? accent : "#3d3555";
+      score.textContent = count>0 ? count+"/"+ACTIONS.length : "—";
+
+      btn.appendChild(pipsDiv);
+      btn.appendChild(score);
+      btn.addEventListener("click", () => {
+        expanded = isExpanded ? null : ck;
+        render();
+      });
+      col.appendChild(btn);
+
+      // Checklist (expanded)
+      if (isExpanded) {
+        const list = document.createElement("div");
+        list.className = "checklist";
+        list.style.borderTop = "1px solid "+accent+"33";
+        list.style.background = accent+"08";
+        ACTIONS.forEach(action => {
+          const row = document.createElement("div");
+          row.className = "check-row";
+          const box = document.createElement("div");
+          box.className = "checkbox"+(cc[action.id]?" checked":"");
+          box.style.setProperty("--accent", accent);
+          if (cc[action.id]) {
+            box.innerHTML = `<svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+          }
+          const lbl = document.createElement("span");
+          lbl.className = "check-label";
+          lbl.textContent = action.icon+" "+action.label;
+          row.appendChild(box);
+          row.appendChild(lbl);
+          row.addEventListener("click", () => {
+            const k = cellKey(subject, dayKey);
+            if (!checks[k]) checks[k] = {};
+            checks[k][action.id] = !checks[k][action.id];
+            save();
+            render();
+          });
+          list.appendChild(row);
+        });
+        col.appendChild(list);
+      }
+
+      cols.appendChild(col);
+    });
+
+    card.appendChild(cols);
+    container.appendChild(card);
+  });
+}
+
+document.getElementById("prev-week").addEventListener("click", ()=>{ weekOffset--; expanded=null; render(); });
+document.getElementById("next-week").addEventListener("click", ()=>{ weekOffset++; expanded=null; render(); });
+
+render();
+</script>
+</body>
+</html>
